@@ -49,12 +49,12 @@
         // Function to fetch list of Markdown files
         async function fetchMarkdownFiles() {
             try {
-                const response = await fetch('/Blogs');
+                const response = await fetch('/');
                 if (!response.ok) {
                     throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
                 }
                 const files = await response.json();
-                const mdFiles = files.filter(file => file.endsWith('.md')).map(file => `Blogs/${file}`);
+                const mdFiles = files.filter(file => file.endsWith('.md')).map(file => `${file}`);
                 if (mdFiles.length === 0) {
                     throw new Error('No .md files found in the Blogs directory');
                 }
