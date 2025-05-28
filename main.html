@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown Viewer - Blogs</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+        }
+        #sidebar {
+            width: 250px;
+            border-right: 1px solid #ccc;
+            padding-right: 20px;
+        }
+        #content {
+            flex-grow: 1;
+            padding-left: 20px;
+            max-width: 800px;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+        li {
+            padding: 5px 0;
+            cursor: pointer;
+            color: #007bff;
+        }
+        li:hover {
+            text-decoration: underline;
+        }
+        .error {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <div id="sidebar">
+        <h2>Blogs</h2>
+        <ul id="file-list"></ul>
+    </div>
+    <div id="content"></div>
+    <script>
+        // Function to fetch list of Markdown files
+        async function fetchMarkdownFiles() {
+            try {
+                const response = await fetch('/Blogs');
+                if (!response.ok) {
+                    throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
+                }
+                const files = await response.json();
+                const mdFiles = files.filter(file => file.endsWith('.md')).map(file => `Blogs/${file}`);
+                if (mdFiles.length === 0) {
+                    throw new Error('No .md files found in the Blogs directory');
+                }
+                return mdFiles;
+            } catch (error) {
+                console.error('Error fetching files:', error);
+                document.getElementById('content').innerHTML = 
+                    `<p class="error">Error fetching file list: ${error.message}. Check console for details.</p>`;
+                return [];
+            }
+        }
+
+        // Function to load and display Markdown content
+        async function loadMarkdown(file) {
+            try {
+                const response = await fetch(file);
+                if (!response.ok) throw new Error('File not found');
+                const markdown = await response.text();
+                document.getElementById('content').innerHTML = marked.parse(markdown);
+            } catch (error) {
+                console.error('Error loading file:', error);
+                document.getElementById('content').innerHTML = 
+                    `<p class="error">Error loading file: ${error.message}</p>`;
+            }
+        }
+
+        // Function to populate file list
+        function populateFileList(files) {
+            const fileList = document.getElementById('file-list');
+            fileList.innerHTML = ''; // Clear existing list
+            files.forEach(file => {
+                const li = document.createElement('li');
+                li.textContent = file.split('/').pop(); // Display only file name, not path
+                li.onclick = () => loadMarkdown(file);
+                fileList.appendChild(li);
+            });
+        }
+
+        // Initialize
+        async function init() {
+            const markdownFiles = await fetchMarkdownFiles();
+            populateFileList(markdownFiles);
+            if (markdownFiles.length > 0) {
+                loadMarkdown(markdownFiles[0]);
+            } else {
+                document.getElementById('content').innerHTML = 
+                    '<p>No Markdown files found in the Blogs directory. Ensure files are in the Blogs folder on the server.</p>';
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
